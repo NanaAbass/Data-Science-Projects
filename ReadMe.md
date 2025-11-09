@@ -80,25 +80,19 @@ The dataset contains property-level information such as:
 
 cd HousePrice_Project
 
-
-3. Install dependencies:
-
-pip install -r requirements.txt
-
-
-4. Open the notebook:
+3. Open the notebook:
 
 jupyter notebook HousePrice_Project.ipynb
 
-## 🧩 Folder Structure
+## Folder Structure
 HousePrice_Project/
 │
 ├── HousePrice_Project.ipynb     # Main Jupyter notebook
 ├── house_prices_portfolio.csv   # Dataset file
 ├── README.md                    # Project documentation
-└── requirements.txt             # Dependencies
 
-💡 Future Improvements
+
+## Future Improvements
 
     - Open to suggestions and collaborations
 
@@ -107,8 +101,9 @@ HousePrice_Project/
 Nana Abaasah
 Data Scientist (in training) | Medical Laboratory Scientist | AWS Solutions Architect
 📍 Ghana
-🔗 LinkedIn
+🔗 www.linkedin.com/in/nana-kwame-abaasah
 
 ## License
+
 
 This project is open-source and available under the MIT License.
