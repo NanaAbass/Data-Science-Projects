@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UTI Predictor — Clinical Decision Support</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0f1a;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --border: rgba(255,255,255,0.07);
+    --border-active: rgba(99,179,237,0.4);
+    --accent: #63b3ed;
+    --accent2: #f6ad55;
+    --danger: #fc8181;
+    --success: #68d391;
+    --text: #f0f4ff;
+    --muted: #6b7a99;
+    --mono: 'DM Mono', monospace;
+    --serif: 'DM Serif Display', serif;
+    --sans: 'Sora', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    min-height: 100vh;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* Grid noise texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(99,179,237,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,179,237,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .glow-orb {
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(99,179,237,0.06) 0%, transparent 70%);
+    top: -200px; left: -200px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow-orb2 {
+    position: fixed;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(246,173,85,0.04) 0%, transparent 70%);
+    bottom: -100px; right: -100px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* HEADER */
+  header {
+    padding: 36px 0 48px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 48px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .brand-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .brand-name {
+    font-family: var(--serif);
+    font-size: 38px;
+    line-height: 1;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .brand-name span {
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .header-meta {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 6px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    align-self: flex-end;
+  }
+
+  .badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* LAYOUT */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 28px;
+    align-items: start;
+  }
+
+  /* FORM CARD */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    animation: fadeUp 0.7s ease 0.1s both;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  input[type=number], select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    appearance: none;
+  }
+
+  input[type=number]:focus, select:focus {
+    border-color: var(--border-active);
+    box-shadow: 0 0 0 3px rgba(99,179,237,0.08);
+  }
+
+  input[type=number]::placeholder { color: var(--muted); opacity: 0.5; }
+
+  select option { background: var(--surface2); color: var(--text); }
+
+  .select-wrap {
+    position: relative;
+  }
+  .select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+    font-size: 12px;
+  }
+
+  /* Divider */
+  .form-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+  }
+
+  /* Submit */
+  .btn-predict {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: #0a0f1a;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-predict::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s;
+  }
+
+  .btn-predict:hover::before { transform: translateX(100%); }
+  .btn-predict:hover { background: #90cdf4; transform: translateY(-1px); }
+  .btn-predict:active { transform: translateY(0); }
+
+  .btn-predict.loading { opacity: 0.7; pointer-events: none; }
+
+  /* Spinner */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: #0a0f1a;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  .loading .spinner { display: block; }
+  .loading .btn-text { display: none; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* RIGHT COLUMN */
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeUp 0.7s ease 0.2s both;
+  }
+
+  /* RESULT CARD */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: border-color 0.4s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-card.positive { border-color: rgba(252,129,129,0.4); }
+  .result-card.negative { border-color: rgba(104,211,145,0.4); }
+
+  .result-idle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .result-idle-icon {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 1px dashed var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 22px;
+  }
+
+  .result-idle p {
+    color: var(--muted);
+    font-size: 13px;
+    max-width: 200px;
+    line-height: 1.5;
+  }
+
+  .result-output { display: none; width: 100%; }
+
+  .result-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .result-label.pos { color: var(--danger); }
+  .result-label.neg { color: var(--success); }
+
+  .result-verdict {
+    font-family: var(--serif);
+    font-size: 42px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .result-verdict.pos { color: var(--danger); }
+  .result-verdict.neg { color: var(--success); }
+
+  .result-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  /* Confidence gauge */
+  .gauge-wrap {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .gauge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+
+  .gauge-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .gauge-value {
+    font-family: var(--mono);
+    font-size: 20px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .gauge-track {
+    width: 100%;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .gauge-fill {
+    height: 100%;
+    border-radius: 100px;
+    width: 0%;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .gauge-fill.pos { background: linear-gradient(90deg, #fc8181, #f6ad55); }
+  .gauge-fill.neg { background: linear-gradient(90deg, #68d391, #63b3ed); }
+
+  /* Disclaimer */
+  .disclaimer {
+    font-size: 10px;
+    color: var(--muted);
+    opacity: 0.6;
+    line-height: 1.5;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    margin-top: 4px;
+    text-align: left;
+  }
+
+  /* FEATURE IMPORTANCE CARD */
+  .importance-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 32px;
+  }
+
+  .importance-idle {
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  .importance-list { display: none; }
+
+  .imp-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+
+  .imp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .imp-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  .imp-pct {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .imp-track {
+    width: 100%;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .imp-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .imp-fill:nth-child(1) { background: var(--accent); }
+
+  /* ANIMATIONS */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes popIn {
+    0%   { opacity: 0; transform: scale(0.88); }
+    70%  { transform: scale(1.03); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .pop { animation: popIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+  /* FOOTER */
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--muted);
+    font-size: 11px;
+    font-family: var(--mono);
+    animation: fadeUp 0.7s ease 0.4s both;
+  }
+
+  footer a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .brand-name { font-size: 28px; }
+    .result-verdict { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="glow-orb"></div>
+<div class="glow-orb2"></div>
+
+<div class="app">
+
+  <header>
+    <div class="brand">
+      <span class="brand-tag">Clinical Decision Support · v1.0</span>
+      <h1 class="brand-name">UTI <span>Predictor</span></h1>
+    </div>
+    <div class="header-meta">
+      <div class="badge"><span class="badge-dot"></span>XGBoost · AUC 0.91</div>
+      <div class="badge" style="margin-top:4px">Data Science Project</div>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- LEFT: FORM -->
+    <div class="form-card">
+
+      <div class="section-label">Patient Demographics</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Age</label>
+          <input type="number" id="age" placeholder="e.g. 45" min="0" max="120"/>
+        </div>
+        <div class="field">
+          <label for="gender">Gender</label>
+          <div class="select-wrap">
+            <select id="gender" name="gender">
+              <option value="">Select</option>
+              <option value="0">Female</option>
+              <option value="1">Male</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-divider"></div>
+      <div class="section-label">Urinalysis Results</div>
+      <div class="form-grid">
+
+        <div class="field">
+          <label>UA Bacteria</label>
+          <div class="select-wrap">
+            <select id="ua_bacteria" title="UA Bacteria">
+              <option value="">Select</option>
+              <option value="0">None</option>
+              <option value="1">Few</option>
+              <option value="2">Moderate</option>
+              <option value="3">Many</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>UA Clarity</label>
+          <div class="select-wrap">
+            <select id="ua_clarity" title="UA Clarity">
+              <option value="">Select</option>
+              <option value="0">Clear</option>
+              <option value="1">Hazy</option>
+              <option value="2">Cloudy</option>
+              <option value="3">Turbid</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>UA Leukocytes</label>
+          <div class="select-wrap">
+            <select id="ua_leuk" title="UA Leukocytes">
+              <option value="">Select</option>
+              <option value="0">Negative</option>
+              <option value="1">Trace</option>
+              <option value="2">Small</option>
+              <option value="3">Moderate</option>
+              <option value="4">Large</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>UA Nitrite</label>
+          <div class="select-wrap">
+            <select id="ua_nitrite" title="UA Nitrite">
+              <option value="">Select</option>
+              <option value="0">Negative</option>
+              <option value="1">Positive</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>UA pH</label>
+          <input type="number" id="ua_ph" placeholder="5.0 – 8.5" min="4" max="9" step="0.5"/>
+        </div>
+
+        <div class="field">
+          <label>UA Protein</label>
+          <div class="select-wrap">
+            <select id="ua_protein" title="UA Protein">
+              <option value="">Select</option>
+              <option value="0">Negative</option>
+              <option value="1">Trace</option>
+              <option value="2">30 mg/dL</option>
+              <option value="3">100 mg/dL</option>
+              <option value="4">300+ mg/dL</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>UA Color</label>
+          <div class="select-wrap">
+            <select id="ua_color" title="UA Color">
+              <option value="">Select</option>
+              <option value="0">Yellow</option>
+              <option value="1">Pale Yellow</option>
+              <option value="2">Dark Yellow</option>
+              <option value="3">Amber</option>
+              <option value="4">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>WBC Count</label>
+          <input type="number" id="wbc" placeholder="cells/hpf" min="0"/>
+        </div>
+
+      </div>
+
+      <div class="form-divider"></div>
+      <div class="section-label">Clinical Flags</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Prior UTI (12 mo)</label>
+          <div class="select-wrap">
+            <select id="prior_uti" title="Prior UTI in past 12 months">
+              <option value="">Select</option>
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Catheter Use</label>
+          <div class="select-wrap">
+            <select id="catheter" title="Current Catheter Use">
+              <option value="">Select</option>
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-predict" id="predictBtn" onclick="runPrediction()">
+        <div class="spinner"></div>
+        <span class="btn-text">Run Prediction</span>
+      </button>
+
+    </div>
+
+    <!-- RIGHT: RESULTS -->
+    <div class="right-col">
+
+      <!-- Result -->
+      <div class="result-card" id="resultCard">
+        <div class="result-idle" id="resultIdle">
+          <div class="result-idle-icon">⬡</div>
+          <p>Fill in the patient data and run the prediction to see results here.</p>
+        </div>
+
+        <div class="result-output" id="resultOutput">
+          <div class="result-label" id="resultLabel"></div>
+          <div class="result-verdict pop" id="resultVerdict"></div>
+          <div class="result-sub" id="resultSub"></div>
+
+          <div class="gauge-wrap">
+            <div class="gauge-header">
+              <span class="gauge-label">Confidence</span>
+              <span class="gauge-value" id="gaugeValue">—</span>
+            </div>
+            <div class="gauge-track">
+              <div class="gauge-fill" id="gaugeFill"></div>
+            </div>
+          </div>
+
+          <div class="disclaimer">
+            ⚠ For clinical decision support only. Not a substitute for professional medical judgement. Always correlate with patient history and clinical presentation.
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature importance -->
+      <div class="importance-card">
+        <div class="section-label">Feature Contribution</div>
+
+        <div class="importance-idle" id="importanceIdle">
+          Run a prediction to see which features drove the result.
+        </div>
+
+        <div class="importance-list" id="importanceList"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <span>UTI Predict · XGBoost Classifier · ALX Data Science</span>
+    <span>Replace <a href="#">/api/predict</a> with your Lambda endpoint</span>
+  </footer>
+
+</div>
+
+<script>
+  // Simulated feature importances from your trained XGBoost model
+  // Replace the runPrediction() fetch block with your real Lambda endpoint
+  const FEATURE_IMPORTANCES = [
+    { name: 'ua_bacteria',  pct: 24 },
+    { name: 'ua_leuk',      pct: 19 },
+    { name: 'wbc',          pct: 16 },
+    { name: 'ua_nitrite',   pct: 14 },
+    { name: 'ua_clarity',   pct: 10 },
+    { name: 'ua_protein',   pct:  8 },
+    { name: 'prior_uti',    pct:  5 },
+    { name: 'age',          pct:  4 },
+  ];
+
+  const IMP_COLORS = [
+    '#63b3ed','#76c7f0','#8ecff0','#a6d8f2',
+    '#b8e0f4','#c9e8f6','#daf0f9','#ebf8ff'
+  ];
+
+  function getFields() {
+    return {
+      age:         document.getElementById('age').value,
+      gender:      document.getElementById('gender').value,
+      ua_bacteria: document.getElementById('ua_bacteria').value,
+      ua_clarity:  document.getElementById('ua_clarity').value,
+      ua_leuk:     document.getElementById('ua_leuk').value,
+      ua_nitrite:  document.getElementById('ua_nitrite').value,
+      ua_ph:       document.getElementById('ua_ph').value,
+      ua_protein:  document.getElementById('ua_protein').value,
+      ua_color:    document.getElementById('ua_color').value,
+      wbc:         document.getElementById('wbc').value,
+      prior_uti:   document.getElementById('prior_uti').value,
+      catheter:    document.getElementById('catheter').value,
+    };
+  }
+
+
+   const API_URL = 'https://lezaufme35.execute-api.us-east-1.amazonaws.com/prod/predict';
+
+  async function runPrediction() {
+    const btn = document.getElementById('predictBtn');
+    btn.classList.add('loading');
+
+    try {
+      const res = await fetch(API_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(getFields())
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+
+      const data       = await res.json();
+      const body       = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+      const confidence = body.probability;
+      const isPositive = body.prediction === 1;
+
+      btn.classList.remove('loading');
+      showResult(isPositive, confidence);
+      showImportances(isPositive);
+
+    } catch (err) {
+      btn.classList.remove('loading');
+      alert('Prediction failed: ' + err.message);
+    }
+  }
+
+  function showResult(isPositive, confidence) {
+    const card   = document.getElementById('resultCard');
+    const idle   = document.getElementById('resultIdle');
+    const output = document.getElementById('resultOutput');
+    const label  = document.getElementById('resultLabel');
+    const verdict= document.getElementById('resultVerdict');
+    const sub    = document.getElementById('resultSub');
+    const fill   = document.getElementById('gaugeFill');
+    const val    = document.getElementById('gaugeValue');
+
+    idle.style.display = 'none';
+    output.style.display = 'block';
+
+    if (isPositive) {
+      card.className = 'result-card positive';
+      label.className = 'result-label pos';
+      label.textContent = '⬡ Diagnosis Signal';
+      verdict.className = 'result-verdict pop pos';
+      verdict.textContent = 'UTI Likely';
+      sub.textContent = 'Elevated risk markers detected. Clinical review recommended.';
+      fill.className = 'gauge-fill pos';
+    } else {
+      card.className = 'result-card negative';
+      label.className = 'result-label neg';
+      label.textContent = '⬡ Diagnosis Signal';
+      verdict.className = 'result-verdict pop neg';
+      verdict.textContent = 'UTI Unlikely';
+      sub.textContent = 'Low-risk profile. Monitor if symptoms persist.';
+      fill.className = 'gauge-fill neg';
+    }
+
+    const pct = Math.round(confidence * 100);
+    val.textContent = pct + '%';
+    setTimeout(() => { fill.style.width = pct + '%'; }, 80);
+  }
+
+  function showImportances(isPositive) {
+    const idle = document.getElementById('importanceIdle');
+    const list = document.getElementById('importanceList');
+
+    idle.style.display = 'none';
+    list.style.display = 'block';
+    list.innerHTML = '';
+
+    const sorted = [...FEATURE_IMPORTANCES].sort((a,b) => b.pct - a.pct);
+    const max = sorted[0].pct;
+
+    sorted.forEach((feat, i) => {
+      const row = document.createElement('div');
+      row.className = 'imp-row';
+      row.innerHTML = `
+        <div class="imp-header">
+          <span class="imp-name">${feat.name}</span>
+          <span class="imp-pct">${feat.pct}%</span>
+        </div>
+        <div class="imp-track">
+          <div class="imp-fill" id="imp-${i}" style="background:${IMP_COLORS[i]};width:0%"></div>
+        </div>`;
+      list.appendChild(row);
+      setTimeout(() => {
+        document.getElementById(`imp-${i}`).style.width = ((feat.pct / max) * 100) + '%';
+      }, 100 + i * 60);
+    });
+  }
+</script>
+</body>
+</html>
