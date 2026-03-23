@@ -4,7 +4,7 @@ README
 
 > XGBoost-powered UTI prediction — trained on clinical urinalysis data, deployed on AWS Lambda, accessible in a browser.
 
-🔗 **[Live Demo]([INSERT CLOUDFRONT URL])** · 📓 **[Notebook](notebook/UTI.ipynb)**
+🔗 **[Live Demo](https://d30wt5pj3v1788.cloudfront.net)** · 📓 **[Notebook](notebook/UTI.ipynb)**
 
 ---
 
