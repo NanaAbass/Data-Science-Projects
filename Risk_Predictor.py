@@ -185,7 +185,7 @@ def run_pipeline(_df1, _le):
     X_tr_res, y_tr_res = smote.fit_resample(X_tr_sc, y_train)
 
     models = {
-        "Logistic Regression":  LogisticRegression(max_iter=1000, C=1.0, multi_class="multinomial", solver="lbfgs", random_state=42),
+        "Logistic Regression":  LogisticRegression(max_iter=1000, C=1.0, solver="lbfgs", random_state=42),
         "Decision Tree":        DecisionTreeClassifier(max_depth=8, min_samples_split=20, random_state=42),
         "Random Forest":        RandomForestClassifier(n_estimators=200, max_depth=10, class_weight="balanced", random_state=42, n_jobs=-1),
         "Gradient Boosting":    GradientBoostingClassifier(n_estimators=200, learning_rate=0.05, max_depth=5, subsample=0.8, random_state=42),
