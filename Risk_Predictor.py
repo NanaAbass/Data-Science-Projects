@@ -11,7 +11,7 @@ warnings.filterwarnings('ignore')
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_validate
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, VotingClassifier
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import (
     classification_report, confusion_matrix, ConfusionMatrixDisplay,
@@ -19,7 +19,6 @@ from sklearn.metrics import (
 )
 from imblearn.over_sampling import SMOTE
 from xgboost import XGBClassifier
-from lightgbm import LGBMClassifier
 
 # ── PAGE CONFIG ──────────────────────────────────────────────────────────────
 st.set_page_config(
