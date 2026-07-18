@@ -1,65 +1,84 @@
-# Data Science Projects
-
-Welcome to my data science portfolio! I'm a self-taught data scientist passionate about using data to solve real-world problems — with a growing focus on **healthcare & clinical data analytics**. 
-This repository is a collection of my hands-on projects as I continue learning and applying data science techniques across different domains.
+# 🏥 Insurance Risk ML — Streamlit App
+**ALX Data Club · End-to-End Insurance Risk Prediction Dashboard**
 
 ---
 
-## Projects
+## Setup & Run
 
-### [Patient Risk Phenotyping — PCA & K-Means Clustering](./patient-risk-phenotyping/)
-> Unsupervised learning | Dimensionality Reduction | Clinical Data
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
 
-Applied Principal Component Analysis (PCA) and K-Means Clustering to segment 500 patients into distinct risk phenotypes based on 11 clinical features including HbA1c, BMI, blood pressure, and cholesterol levels. 
-The goal was to uncover hidden patient subgroups that could inform personalized healthcare strategies.
-
-**Key techniques:** PCA, K-Means, StandardScaler, Elbow Method, Correlation Analysis  
-**Tools:** Python, scikit-learn, pandas, seaborn, statsmodels
-
-### [House Price Prediction — Multiple Linear Regression, Ridge & LASSO](./housing-prediction/)
-> Supervised Learning | Regression | Regularization | Model Diagnostics
-
-Built and compared regression models to predict house prices using 13 property and neighbourhood features including lot size, crime rate, distance to city center, and energy efficiency score. 
-The project follows a full ML workflow — from EDA and OLS inference through to assumption validation and regularization.
-
-**Key techniques:** Multiple Linear Regression, Ridge (L2), LASSO (L1), RidgeCV/LassoCV, VIF (Multicollinearity), Breusch-Pagan Test (Heteroscedasticity), Q-Q Plots (Normality), Model Persistence with pickle  
-**Tools:** Python, scikit-learn, statsmodels, pandas, seaborn, joblib
-
----
-
-## Tech Stack
-
-![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
-![Jupyter](https://img.shields.io/badge/Jupyter-F37626?style=flat&logo=jupyter&logoColor=white)
-![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat&logo=scikit-learn&logoColor=white)
-![Pandas](https://img.shields.io/badge/Pandas-150458?style=flat&logo=pandas&logoColor=white)
-![NumPy](https://img.shields.io/badge/NumPy-013243?style=flat&logo=numpy&logoColor=white)
-![Matplotlib](https://img.shields.io/badge/Matplotlib-11557C?style=flat&logo=matplotlib&logoColor=white)
-![statsmodels](https://img.shields.io/badge/statsmodels-4051B5?style=flat&logoColor=white)
-
----
-
-## About Me
-I'm a data scientist on a continuous learning journey, working through real datasets to build practical skills in machine learning, statistical analysis, and data visualization. 
-My projects reflect my curiosity and drive to apply data science in meaningful, impactful ways — particularly in the healthcare space.
-
-- Currently exploring: Machine learning for clinical and health data
-- Always learning: New algorithms, tools, and best practices
-- Open to: Collaboration, feedback, and connecting with fellow data enthusiasts
----
-
-## 📁 Repository Structure
-```
-data-science-projects/
-│
-├── README.md                        ← You are here
-├── patient-risk-phenotyping/        ← PCA & K-Means clustering on clinical data
-└── housing-prediction/              ← Multiple regression + Ridge/LASSO on house prices
+# 2. Launch the app
+streamlit run app.py
 ```
 
-## Connect With Me
+Then open http://localhost:8501 in your browser.
 
-[![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/NanaAbass)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/nana-kwame-abaasah)
 ---
-*More projects coming soon — stay tuned! ⭐ Feel free to star the repo if you find it useful.*
+
+## Usage
+
+1. **Upload** your `insurance.csv` using the sidebar file uploader.
+2. The full ML pipeline runs automatically (cached after first run — ~30 seconds).
+3. Navigate between sections using the sidebar radio buttons.
+
+---
+
+## App Sections
+
+| Page | What You'll See |
+|---|---|
+| 🏠 Overview | Dataset stats, risk distribution, pipeline summary |
+| 📊 EDA | Numerical/categorical distributions, bivariate analysis, correlation heatmap, outlier plots |
+| 🎯 Target Engineering | Risk Score formula, threshold visualisation, category breakdown |
+| ⚙️ Preprocessing | Feature engineering details, encoding strategy, scaling explanation, SMOTE before/after |
+| 🤖 Model Training & CV | Model overview, 5-fold CV results chart + table, ensemble info |
+| 📈 Evaluation | Leaderboard, per-model confusion matrix, ROC curves, classification report |
+| 🔍 Feature Importance | Tree-based importance bar chart + ranked table (selectable model) |
+| 🧮 Risk Predictor | Live single-customer risk scoring with score breakdown gauge |
+
+---
+
+## Expected CSV Columns
+
+```
+Customer_ID, Full_Name, Age, Gender, Smoker, BMI, Grade_Level,
+Monthly_Income_GHS, Premium_GHS, Tenure_Months, Claim_Frequency,
+Claim_Severity, Payment_Behavior, Region, Product_Applied,
+Marital_Status, Payment_Method, Policy_Status, Application_Date,
+Agent_ID, Agent_Name, Dependents (optional)
+```
+
+---
+
+## Risk Score Formula (Target Engineering)
+
+| Variable | Max Pts | Rule |
+|---|---|---|
+| Age | 20 | <30→5 · 30–44→10 · 45–59→15 · 60+→20 |
+| BMI | 20 | <18.5→5 · 18.5–24.9→10 · 25–29.9→15 · ≥30→20 |
+| Smoker | 15 | No→0 · Yes→15 |
+| Claim Frequency | 20 | Each claim = 5 pts (max 20) |
+| Claim Severity | 15 | None→0 · Low→3 · Med→7 · High→11 · Critical→15 |
+| Payment Behavior | 10 | Consistent→0 · Occ. Late→5 · Freq. Late→10 |
+
+**Thresholds:** LOW <35 · MEDIUM 35–51 · HIGH 52–67 · CRITICAL ≥68
+
+---
+
+## ML Pipeline
+
+1. Load & clean (dedup, drop IDs)
+2. Engineer target (Risk Score → 4 categories)
+3. Feature engineering (10 new features + interactions)
+4. Encode (binary, ordinal, one-hot)
+5. Cap outliers (IQR winsorisation)
+6. Log-transform skewed columns
+7. 80/20 stratified train/test split
+8. StandardScaler (fit on train only)
+9. SMOTE (train only)
+10. 5-fold StratifiedKFold CV
+11. Train 6 models (LR, DT, RF, GB, XGB, LGBM)
+12. Evaluate (accuracy, F1-macro, ROC-AUC)
+13. Soft voting ensemble (top 3 CV models)
