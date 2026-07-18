@@ -23,7 +23,7 @@ from lightgbm import LGBMClassifier
 
 # ── PAGE CONFIG ──────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Insurance Risk ML",
+    page_title="Insurance Risk Prediction",
     page_icon="🏥",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -188,9 +188,8 @@ def run_pipeline(_df1, _le):
         "Logistic Regression":  LogisticRegression(max_iter=1000, C=1.0, solver="lbfgs", random_state=42),
         "Decision Tree":        DecisionTreeClassifier(max_depth=8, min_samples_split=20, random_state=42),
         "Random Forest":        RandomForestClassifier(n_estimators=200, max_depth=10, class_weight="balanced", random_state=42, n_jobs=-1),
-        "Gradient Boosting":    GradientBoostingClassifier(n_estimators=200, learning_rate=0.05, max_depth=5, subsample=0.8, random_state=42),
         "XGBoost":              XGBClassifier(n_estimators=300, learning_rate=0.05, max_depth=6, subsample=0.8, colsample_bytree=0.8, use_label_encoder=False, eval_metric="mlogloss", random_state=42, n_jobs=-1),
-        "LightGBM":             LGBMClassifier(n_estimators=300, learning_rate=0.05, max_depth=6, subsample=0.8, colsample_bytree=0.8, class_weight="balanced", random_state=42, n_jobs=-1, verbose=-1),
+        
     }
 
     cv    = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
@@ -428,14 +427,14 @@ with st.sidebar:
 
     page = st.radio(
         "Navigate",
-        ["🏠 Overview",
-         "📊 EDA",
-         "🎯 Target Engineering",
-         "⚙️  Preprocessing",
-         "🤖 Model Training & CV",
-         "📈 Evaluation",
-         "🔍 Feature Importance",
-         "🧮 Risk Predictor"],
+        ["Overview",
+         "EDA",
+         "Target Engineering",
+         "Preprocessing",
+         "Model Training & CV",
+         "Evaluation",
+         "Feature Importance",
+         "Risk Predictor"],
         label_visibility="collapsed"
     )
     st.divider()
@@ -454,13 +453,13 @@ if not uploaded:
     ### What this app covers
     | Section | Content |
     |---|---|
-    | 📊 EDA | Distributions, correlations, outlier analysis |
-    | 🎯 Target Engineering | Risk Score formula & category breakdown |
-    | ⚙️ Preprocessing | Outlier capping, log transforms, SMOTE |
-    | 🤖 Model Training & CV | 6 models + 5-fold cross validation |
-    | 📈 Evaluation | Confusion matrices, ROC curves, leaderboard |
-    | 🔍 Feature Importance | Tree-based importances |
-    | 🧮 Risk Predictor | Live single-customer risk scoring |
+    |  EDA | Distributions, correlations, outlier analysis |
+    |  Target Engineering | Risk Score formula & category breakdown |
+    |  Preprocessing | Outlier capping, log transforms, SMOTE |
+    |  Model Training & CV | 6 models + 5-fold cross validation |
+    |  Evaluation | Confusion matrices, ROC curves, leaderboard |
+    |  Feature Importance | Tree-based importances |
+    |  Risk Predictor | Live single-customer risk scoring |
     """)
     st.stop()
 
