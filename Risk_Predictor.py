@@ -187,7 +187,7 @@ def run_pipeline(_df1, _le):
         "Logistic Regression":  LogisticRegression(max_iter=1000, C=1.0, solver="lbfgs", random_state=42),
         "Decision Tree":        DecisionTreeClassifier(max_depth=8, min_samples_split=20, random_state=42),
         "Random Forest":        RandomForestClassifier(n_estimators=200, max_depth=10, class_weight="balanced", random_state=42, n_jobs=-1),
-        "XGBoost":              XGBClassifier(n_estimators=300, learning_rate=0.05, max_depth=6, subsample=0.8, colsample_bytree=0.8, use_label_encoder=False, eval_metric="mlogloss", random_state=42, n_jobs=-1)        
+        "XGBoost":              XGBClassifier(n_estimators=300, learning_rate=0.05, max_depth=6, subsample=0.8, colsample_bytree=0.8, eval_metric="mlogloss", random_state=42, n_jobs=-1)        
     }
 
     cv    = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
